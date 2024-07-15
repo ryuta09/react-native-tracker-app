@@ -10,8 +10,11 @@ import ExpenseForm from "../components/ManageExpense/ExpenseForm";
 function MangeExpenses({ route, navigation }) {
   const expenseCtx = useContext(ExpensesContext);
   const editedExpenseId = route.params?.expenseId;
+  
   // 真偽値に変換
   const isEditing = !!editedExpenseId;
+
+  const selectedExpense = expenseCtx.expenses.find(expense => expense.id === editedExpenseId)
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -28,37 +31,23 @@ function MangeExpenses({ route, navigation }) {
     navigation.goBack();
   }
 
-  function confirmHandler() {
+  function confirmHandler(expenseDate) {
     if (isEditing) {
-      expenseCtx.updateExpense(
-        editedExpenseId,
-        {
-          description: "test!!!!!",
-          amount: 1000,
-          date: new Date("2024-07-13"),
-        }
-      );
+      expenseCtx.updateExpense(editedExpenseId, expenseDate);
     } else {
-      expenseCtx.addExpense(editedExpenseId, {
-        description: "test!!!!!",
-        amount: 1000,
-        date: new Date("2024-07-13"),
-      });
+      expenseCtx.addExpense(expenseDate);
     }
     navigation.goBack();
   }
 
   return (
     <View style={styles.container}>
-      <ExpenseForm />
-      <View style={styles.buttons}>
-        <Button style={styles.button} mode={"flat"} onPress={cancelHandler}>
-          Cancel
-        </Button>
-        <Button style={styles.button} onPress={confirmHandler}>
-          {isEditing ? "Update" : "Add"}
-        </Button>
-      </View>
+      <ExpenseForm
+        submitButtonLabel={isEditing ? "Update" : "Add"}
+        onSubmit={confirmHandler}
+        onCancel={cancelHandler}
+        defaultValues={selectedExpense}
+      />
       {isEditing && (
         <View style={styles.deleteContainer}>
           <IconButton
@@ -80,16 +69,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 2,
     backgroundColor: GlobalStyles.colors.primary800,
-  },
-  buttons: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 8,
-  },
-  button: {
-    minWidth: 120,
-    marginHorizontal: 8,
   },
   deleteContainer: {
     marginTop: 16,

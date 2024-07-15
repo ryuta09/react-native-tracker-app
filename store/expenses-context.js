@@ -52,10 +52,10 @@ function expensesReducer(state, action) {
       const updatableExpense = state[updatableExpenseIndex];
       const updatedItem = { ...updatableExpense, ...action.payload.data };
       const updatedExpenses = [...state];
-      updatedExpenses[updatableExpenseIndex] = updatedItem
+      updatedExpenses[updatableExpenseIndex] = updatedItem;
       return updatedExpenses;
     case "DELETE":
-      return state.filter((expense) => expense.id !== action.payload)
+      return state.filter((expense) => expense.id !== action.payload);
     default:
       return state;
   }
@@ -65,7 +65,7 @@ function ExpensesContextProvider({ children }) {
   // 第二引数に関してはReducerが実行する前の初期値を表す。
   const [expenseState, dispatch] = useReducer(expensesReducer, DUMMY_EXPENSES);
 
-  function addExpense({ expenseDate }) {
+  function addExpense(expenseDate) {
     dispatch({ type: "ADD", payload: expenseDate });
   }
 
@@ -81,10 +81,14 @@ function ExpensesContextProvider({ children }) {
     expenses: expenseState,
     addExpense: addExpense,
     deleteExpense: deleteExpense,
-    updateExpense: updateExpense
-  }
+    updateExpense: updateExpense,
+  };
 
-  return <ExpensesContext.Provider value={value}>{children}</ExpensesContext.Provider>;
+  return (
+    <ExpensesContext.Provider value={value}>
+      {children}
+    </ExpensesContext.Provider>
+  );
 }
 
 export default ExpensesContextProvider;
