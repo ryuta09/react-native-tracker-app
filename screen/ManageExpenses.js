@@ -1,20 +1,26 @@
 import { Text, View, StyleSheet, TextInput } from "react-native";
-import { useLayoutEffect } from "react";
+import { useLayoutEffect, useState } from "react";
 import IconButton from "../components/UI/IconButton";
 import { GlobalStyles } from "../constants/styles";
-import Button from "../components/UI/Button";
 import { ExpensesContext } from "../store/expenses-context";
 import { useContext } from "react";
 import ExpenseForm from "../components/ManageExpense/ExpenseForm";
+import { deleteExpense, storeExpense, updatedExpenses } from "../util/http";
+import LoadingOverlay from "../components/UI/LoadingOverlay";
+import ErrorOverlay from "../components/UI/ErrorOverlay";
 // 編集や追加ができる画面
 function MangeExpenses({ route, navigation }) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState();
   const expenseCtx = useContext(ExpensesContext);
   const editedExpenseId = route.params?.expenseId;
-  
+
   // 真偽値に変換
   const isEditing = !!editedExpenseId;
 
-  const selectedExpense = expenseCtx.expenses.find(expense => expense.id === editedExpenseId)
+  const selectedExpense = expenseCtx.expenses.find(
+    (expense) => expense.id === editedExpenseId
+  );
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -22,22 +28,49 @@ function MangeExpenses({ route, navigation }) {
     });
   }, [navigation, isEditing]);
 
-  function deleteExpenseHandler() {
-    expenseCtx.deleteExpense(editedExpenseId);
-    navigation.goBack();
+  async function deleteExpenseHandler() {
+    setIsSubmitting(true);
+    try {
+      await deleteExpense(editedExpenseId);
+      expenseCtx.deleteExpense(editedExpenseId);
+      navigation.goBack();
+    } catch (error) {
+      setError("費用を削除できませんでした！");
+      setIsSubmitting(false);
+    }
   }
 
   function cancelHandler() {
     navigation.goBack();
   }
 
-  function confirmHandler(expenseDate) {
-    if (isEditing) {
-      expenseCtx.updateExpense(editedExpenseId, expenseDate);
-    } else {
-      expenseCtx.addExpense(expenseDate);
+  async function confirmHandler(expenseDate) {
+    try {
+      if (isEditing) {
+        expenseCtx.updateExpense(editedExpenseId, expenseDate);
+        setIsSubmitting(true);
+        await updatedExpenses(editedExpenseId, expenseDate);
+      } else {
+        const id = await storeExpense(expenseDate);
+        expenseCtx.addExpense({ ...expenseDate, id: id });
+      }
+      navigation.goBack();
+    } catch(error) {
+      setError('保存できませんした！')
+      setIsSubmitting(false)
     }
-    navigation.goBack();
+    
+  }
+
+  function errorHandler() {
+    setError(null)
+  }
+  if(error && !isSubmitting) {
+    return <ErrorOverlay  message={error} onConfirm={errorHandler} />
+  }
+
+  if (isSubmitting) {
+    return <LoadingOverlay />;
   }
 
   return (
